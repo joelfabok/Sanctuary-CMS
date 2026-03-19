@@ -146,7 +146,6 @@ export default function Admin() {
     ['users',      'All Users',         '◎'],
     ['homepage',   'Homepage CMS',      '✦'],
     ['contacts',   'Messages',          '✉'],
-    ['platform',   'Platform Settings', '⚙'],
   ]
 
   const inp = { width: '100%', padding: '8px 11px', borderRadius: 'var(--r)', border: '1px solid var(--b2)', background: 'var(--bg4)', color: 'var(--tx)', fontFamily: "'Instrument Sans',sans-serif", fontSize: 13, outline: 'none' }

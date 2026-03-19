@@ -81,7 +81,7 @@ export function AuthPage() {
     <div style={{height:'100vh',display:'flex'}}>
       <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',padding:48,background:'var(--bg)'}}>
         <div style={{width:'100%',maxWidth:400}}>
-          <button className="btn btn-gh btn-sm" onClick={()=>nav('/')} style={{marginBottom:36,fontSize:12}}>← Back</button>
+          <button className="btn btn-gh btn-sm" onClick={()=>nav('/pricing')} style={{marginBottom:36,fontSize:12}}>← Back</button>
           <div style={{marginBottom:40}}><Logo size={30} /></div>
           <h1 style={{fontSize:34,fontWeight:400,marginBottom:6}}>{mode==='login'?'Welcome back.':'Create account.'}</h1>
           <p style={{color:'var(--tx3)',fontSize:13.5,marginBottom:32}}>{mode==='login'?'Sign in to your dashboard.':'Start your 14-day free trial.'}</p>
@@ -106,7 +106,7 @@ export function AuthPage() {
           {mode==='login' && (
             <div style={{marginTop:18,padding:'12px 14px',background:'var(--bg4)',border:'1px solid var(--b1)',borderRadius:'var(--r2)'}}>
               <div style={{fontSize:10.5,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:'var(--tx4)',marginBottom:8}}>Demo Credentials</div>
-              {[['User','pastor@gracechurch.org','demo123'],['Admin','admin@sanctuary.build','admin123']].map(([r,e,p])=>(
+              {[['User','pastor@gracechurch.org','demo123']/*['Admin','admin@sanctuary.build','admin123']*/].map(([r,e,p])=>(
                 <button key={r} onClick={()=>setForm({...form,email:e,password:p})} style={{display:'flex',justifyContent:'space-between',width:'100%',padding:'7px 10px',background:'var(--bg5)',border:'1px solid var(--b1)',borderRadius:6,cursor:'pointer',fontFamily:'inherit',color:'var(--tx2)',fontSize:12,marginBottom:4}}>
                   <span style={{color:'var(--tx3)'}}>{r}:</span>
                   <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:11,color:'var(--gold)'}}>{e} / {p}</span>
