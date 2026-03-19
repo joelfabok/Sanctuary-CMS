@@ -20,30 +20,29 @@ const app = express();
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
   .split(',')
   .map(o => o.trim());
-app.use(cors({
+// Only apply CORS to API routes, not static files
+const corsOptions = {
   origin: (origin, cb) => {
-    // Allow requests with no origin (e.g. mobile apps, curl)
-    // and any localhost port during development
     if (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin) || allowedOrigins.includes(origin))
       return cb(null, true);
     cb(new Error('Not allowed by CORS'));
   },
   credentials: true,
-}));
+};
 // ── Stripe webhook — must be BEFORE express.json() to receive raw body ──
 app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
 
 app.use(express.json({ limit: '10mb' }));
 
 // ── Routes ──────────────────────────────────────────────────────
-app.use('/api/auth',     authRoutes);
-app.use('/api/users',    userRoutes);
-app.use('/api/orgs',     orgRoutes);
-app.use('/api/sites',    siteRoutes);
-app.use('/api/admin',    adminRoutes);
-app.use('/api/homepage', homepageRoutes);
-app.use('/api/billing',  billingRoutes);
-app.use('/api/contact',  contactRoutes);
+app.use('/api/auth', cors(corsOptions), authRoutes);
+app.use('/api/users', cors(corsOptions), userRoutes);
+app.use('/api/orgs', cors(corsOptions), orgRoutes);
+app.use('/api/sites', cors(corsOptions), siteRoutes);
+app.use('/api/admin', cors(corsOptions), adminRoutes);
+app.use('/api/homepage', cors(corsOptions), homepageRoutes);
+app.use('/api/billing', cors(corsOptions), billingRoutes);
+app.use('/api/contact', cors(corsOptions), contactRoutes);
 
 // ── Serve React in production ────────────────────────────────────
 if (process.env.NODE_ENV === 'production') {
