@@ -47,12 +47,23 @@ app.use('/api/contact',  contactRoutes);
 
 // ── Serve React in production ────────────────────────────────────
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/dist')));
-  app.get('*', (req, res) =>
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'))
-  );
+  const distPath = path.join(__dirname, '../client/dist');
+  app.use(express.static(distPath));
+  app.get('*', (req, res, next) => {
+    res.sendFile(path.join(distPath, 'index.html'), err => {
+      if (err) {
+        console.error('❌ Error serving index.html:', err);
+        res.status(500).send('Internal Server Error');
+      }
+    });
+  });
 }
 
+// Error logging middleware (for static file errors and others)
+app.use((err, req, res, next) => {
+  console.error('❌ Express error:', err);
+  res.status(500).send('Internal Server Error');
+});
 // ── Connect to MongoDB ───────────────────────────────────────────
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
