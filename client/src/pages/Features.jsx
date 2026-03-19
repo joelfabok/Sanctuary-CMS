@@ -165,7 +165,7 @@ export default function Features() {
 
       <footer style={{background:'#060604',borderTop:'1px solid var(--b1)',padding:'22px 36px',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12}}>
         <Logo size={22} />
-        <span style={{fontSize:12,color:'var(--tx4)'}}>© 2024 Product Of Sphere Digital · Built for faith communities</span>
+           <a href="https://www.spheredigital.ca" target="_blank" rel="noopener" style={{fontSize:12,color:'var(--tx4)',textDecoration:'underline',fontWeight:500}}>© 2024 Product Of Sphere Digital</a> <span style={{fontSize:12,color:'var(--tx4)'}}>· Built for faith communities</span>
         <div style={{display:'flex',gap:14}}>{[['Privacy','/privacy'],['Terms','/terms'],['Contact','/contact']].map(([l,to])=><span key={l} onClick={()=>nav(to)} style={{fontSize:12,color:'var(--tx4)',cursor:'pointer'}}>{l}</span>)}</div>
       </footer>
     </div>

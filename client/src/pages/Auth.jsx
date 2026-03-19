@@ -78,8 +78,22 @@ export function AuthPage() {
   }
 
   return (
-    <div style={{height:'100vh',display:'flex'}}>
-      <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',padding:48,background:'var(--bg)'}}>
+    <div style={{
+      minHeight:'100vh',
+      display:'flex',
+      flexDirection:'column',
+    }}>
+      <div
+        style={{
+          flex:1,
+          display:'flex',
+          flexDirection:'column',
+          alignItems:'center',
+          justifyContent:'center',
+          padding:'8vw 4vw',
+          background:'var(--bg)',
+        }}
+      >
         <div style={{width:'100%',maxWidth:400}}>
           <button className="btn btn-gh btn-sm" onClick={()=>nav('/pricing')} style={{marginBottom:36,fontSize:12}}>← Back</button>
           <div style={{marginBottom:40}}><Logo size={30} /></div>
@@ -116,17 +130,32 @@ export function AuthPage() {
           )}
         </div>
       </div>
-      <div style={{width:'44%',background:'var(--bg2)',borderLeft:'1px solid var(--b1)',display:'flex',flexDirection:'column',justifyContent:'center',padding:'60px 48px',position:'relative',overflow:'hidden'}}>
-        <div style={{position:'relative'}}>
-          <div style={{display:'flex',gap:1,marginBottom:18}}>{[1,2,3,4,5].map(s=><span key={s} style={{color:'var(--gold)',fontSize:16}}>★</span>)}</div>
-          <p style={{fontFamily:"'Playfair Display',serif",fontSize:22,lineHeight:1.6,color:'var(--tx)',fontStyle:'italic',marginBottom:24}}>"We launched our church website in one evening. The templates are gorgeous and the editor is incredibly intuitive."</p>
-          <div style={{display:'flex',alignItems:'center',gap:12,borderTop:'1px solid var(--b1)',paddingTop:20}}>
-            <div style={{width:40,height:40,borderRadius:'50%',background:'var(--g3)',border:'1px solid rgba(212,168,67,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:600,color:'var(--gold2)'}}>SR</div>
+      <div
+        style={{
+          width:'100%',
+          background:'var(--bg2)',
+          borderTop:'1px solid var(--b1)',
+          display:'flex',
+          flexDirection:'column',
+          alignItems:'center',
+          justifyContent:'center',
+          padding:'32px 6vw 18px 6vw',
+          position:'relative',
+          overflow:'hidden',
+        }}
+      >
+        <div style={{position:'relative',maxWidth:420,width:'100%'}}>
+          <div style={{display:'flex',gap:1,marginBottom:18,justifyContent:'center'}}>{[1,2,3,4,5].map(s=><span key={s} style={{color:'var(--gold)',fontSize:16}}>★</span>)}</div>
+          <p style={{fontFamily:"'Playfair Display',serif",fontSize:18,lineHeight:1.5,color:'var(--tx)',fontStyle:'italic',marginBottom:20,textAlign:'center'}}>
+            "We launched our church website in one evening. The templates are gorgeous and the editor is incredibly intuitive."
+          </p>
+          <div style={{display:'flex',alignItems:'center',gap:12,borderTop:'1px solid var(--b1)',paddingTop:16,justifyContent:'center'}}>
+            <div style={{width:36,height:36,borderRadius:'50%',background:'var(--g3)',border:'1px solid rgba(212,168,67,.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:600,color:'var(--gold2)'}}>SR</div>
             <div><div style={{fontWeight:600,fontSize:13}}>Sister Mary Roberts</div><div style={{fontSize:12,color:'var(--tx4)'}}>St. Paul's Parish, Boston</div></div>
           </div>
-          <div style={{marginTop:32,padding:'16px 18px',background:'var(--bg3)',borderRadius:12,border:'1px solid var(--b1)'}}>
-            <div style={{fontSize:10.5,fontWeight:700,letterSpacing:'.07em',textTransform:'uppercase',color:'var(--tx4)',marginBottom:12}}>Available for</div>
-            <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>{['Churches','Ministries','Missionaries','Nonprofits'].map(t=><span key={t} className="badge badge-dim" style={{fontSize:11}}>{t}</span>)}</div>
+          <div style={{marginTop:24,padding:'14px 10px',background:'var(--bg3)',borderRadius:12,border:'1px solid var(--b1)',textAlign:'center'}}>
+            <div style={{fontSize:10.5,fontWeight:700,letterSpacing:'.07em',textTransform:'uppercase',color:'var(--tx4)',marginBottom:10}}>Available for</div>
+            <div style={{display:'flex',gap:8,flexWrap:'wrap',justifyContent:'center'}}>{['Churches','Ministries','Missionaries','Nonprofits'].map(t=><span key={t} className="badge badge-dim" style={{fontSize:11}}>{t}</span>)}</div>
           </div>
         </div>
       </div>

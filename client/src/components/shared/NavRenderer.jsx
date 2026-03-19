@@ -48,7 +48,23 @@ export default function NavRenderer({ navCfg, colors, isMobile, onNavigate }) {
   // ── Shared mobile values ──────────────────────────────────────
   const style       = navCfg.style || 'classic'
   const isLight     = style === 'minimal' || style === 'bold'
-  const bg          = navCfg.bg      || (isLight ? '#ffffff'                     : c.dark)
+  // Compose background with opacity if set
+  let bg = navCfg.bg || (isLight ? '#ffffff' : c.dark)
+  if (typeof navCfg.bgOpacity === 'number' && navCfg.bgOpacity < 1) {
+    // Convert hex or rgb(a) to rgba with opacity
+    const hexToRgba = (hex, alpha) => {
+      let c = hex.replace('#', '')
+      if (c.length === 3) c = c.split('').map(x => x + x).join('')
+      const num = parseInt(c, 16)
+      return `rgba(${(num >> 16) & 255},${(num >> 8) & 255},${num & 255},${alpha})`
+    }
+    if (bg.startsWith('#')) bg = hexToRgba(bg, navCfg.bgOpacity)
+    else if (bg.startsWith('rgb(')) bg = bg.replace('rgb(', 'rgba(').replace(')', `,${navCfg.bgOpacity})`)
+    else if (bg.startsWith('rgba(')) {
+      bg = bg.replace(/rgba\(([^)]+),[^)]+\)/, `rgba($1,${navCfg.bgOpacity})`)
+    }
+    // else leave as is
+  }
   const logoColor   = navCfg.logoColor|| (isLight ? (c.heading || '#1a1715')     : c.accent)
   const linkColor   = navCfg.linkColor|| (isLight ? (c.heading || '#1a1715')     : 'rgba(240,236,230,.8)')
   const burgerColor = isLight ? (c.heading || '#1a1715') : 'rgba(240,236,230,.85)'
@@ -87,6 +103,8 @@ export default function NavRenderer({ navCfg, colors, isMobile, onNavigate }) {
         alignItems: 'center',
         justifyContent: 'space-between',
         borderBottom: `1px solid ${border}`,
+        backdropFilter: (typeof navCfg.bgOpacity === 'number' && navCfg.bgOpacity < 1) ? 'saturate(180%) blur(8px)' : undefined,
+        WebkitBackdropFilter: (typeof navCfg.bgOpacity === 'number' && navCfg.bgOpacity < 1) ? 'saturate(180%) blur(8px)' : undefined,
       }}>
         {navCfg.showLogo !== false && (
           <div
@@ -142,6 +160,8 @@ export default function NavRenderer({ navCfg, colors, isMobile, onNavigate }) {
           animation: 'popIn .12s ease',
           overflowY: 'auto',
           maxHeight: '80vh',
+          backdropFilter: (typeof navCfg.bgOpacity === 'number' && navCfg.bgOpacity < 1) ? 'saturate(180%) blur(8px)' : undefined,
+          WebkitBackdropFilter: (typeof navCfg.bgOpacity === 'number' && navCfg.bgOpacity < 1) ? 'saturate(180%) blur(8px)' : undefined,
         }}>
           <div style={{ padding: '8px 0' }}>
             {links.map((lnk, i) => {
