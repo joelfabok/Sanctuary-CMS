@@ -185,6 +185,40 @@ export function NavbarPanel({ nav, palette, onChange, pages }) {
 
 // ── Property Panel ─────────────────────────────────────────────────
 export default function PropPanel({ el, row, nav, palette, pages, onEl, onRow, onNav, onDel, onDup, onDelRow, onDupRow }) {
+    // Starter snippets for Custom HTML
+    const HTML_SNIPPETS = [
+      {
+        name: 'Google Maps Embed',
+        desc: 'Basic map iframe with placeholder address',
+        code: `<iframe width="100%" height="300" style="border:0" loading="lazy" allowfullscreen src="https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY&q=Church+Address"></iframe>`
+      },
+      {
+        name: 'YouTube Video',
+        desc: 'Responsive YouTube embed',
+        code: `<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden"><iframe src="https://www.youtube.com/embed/VIDEO_ID" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allowfullscreen></iframe></div>`
+      },
+      {
+        name: 'Mailchimp Signup',
+        desc: 'Simple styled email input form',
+        code: `<form action="https://YOUR-LIST.usX.list-manage.com/subscribe/post?u=XXX&amp;id=XXX" method="post" target="_blank" style="display:flex;gap:8px"><input type="email" name="EMAIL" placeholder="Your email" style="padding:8px;border-radius:4px;border:1px solid #ccc;font-size:15px" required><button type="submit" style="padding:8px 16px;border-radius:4px;background:#d4a843;color:#fff;font-weight:600;border:none">Subscribe</button></form>`
+      },
+      {
+        name: 'Giving Button (Stripe-ready)',
+        desc: 'Styled donate button, replace with your Stripe link',
+        code: `<div style="text-align:center"><a href="https://your-stripe-link" target="_blank" style="display:inline-block;padding:12px 28px;background:#d4a843;color:#fff;font-size:18px;font-weight:700;border-radius:8px;text-decoration:none">Give Online</a><div style="font-size:12px;color:#888;margin-top:6px">Replace with your Stripe link</div></div>`
+      },
+      {
+        name: 'Church Center Widget',
+        desc: 'Planning Center Church Center iframe',
+        code: `<iframe src="https://yourchurch.churchcenter.com/embed" style="width:100%;height:400px;border:none"></iframe>`
+      },
+      {
+        name: 'Bible Verse API',
+        desc: 'Fetch and display a verse from bible-api.com',
+        code: `<div id="verse" style="font-size:16px;font-style:italic"></div><script>fetch('https://bible-api.com/john+3:16').then(r=>r.json()).then(d=>{document.getElementById('verse').textContent=d.text})</script>`
+      },
+    ];
+    const [snipOpen, setSnipOpen] = useState(false);
   if (nav)       return <NavbarPanel nav={nav} palette={palette} onChange={onNav} pages={pages||[]} />
   if (!el && !row) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:12,padding:24,textAlign:'center'}}>
@@ -236,7 +270,7 @@ export default function PropPanel({ el, row, nav, palette, pages, onEl, onRow, o
           </PSec>
         )}
 
-        {['heading','text','quote','badge'].includes(el.type) && (
+        {['heading','text','quote','badge','html'].includes(el.type) && (
           <PSec title="Content">
             <label className="lbl">Text</label>
             <textarea className="inp" rows={el.type==='text'?5:3} value={el.text||''} onChange={e=>u('text',e.target.value)} style={{marginBottom:el.type==='quote'?8:0}} />
@@ -247,7 +281,59 @@ export default function PropPanel({ el, row, nav, palette, pages, onEl, onRow, o
           </PSec>
         )}
 
-        {el.type==='button' && <>
+        {/* Custom HTML block property panel */}
+        {el.type==='html' && (
+          <PSec title="Custom HTML Block">
+            <label className="lbl">Block Name</label>
+            <input className="inp" value={el.label||''} onChange={e=>u('label',e.target.value)} placeholder="e.g. Giving Form, Map, Signup" style={{marginBottom:8}} />
+            <label className="lbl">HTML/CSS/JS Code</label>
+            <textarea
+              className="inp"
+              rows={12}
+              value={el.code||''}
+              onChange={e=>u('code',e.target.value)}
+              style={{fontFamily:'JetBrains Mono,monospace',fontSize:13,minHeight:180,marginBottom:6,width:'100%'}}
+              placeholder="Paste HTML, CSS, or JS here"
+            />
+            <div style={{marginBottom:8}}>
+              <SL label="Height" value={el.h||300} min={50} max={1200} unit="px" onChange={v=>u('h',v)} />
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+              <input type="checkbox" checked={el.sandboxed!==false} onChange={e=>u('sandboxed',e.target.checked)} style={{accentColor:'var(--gold)'}} />
+              <span style={{fontSize:12.5,color:'var(--tx2)'}}>Sandboxed (recommended)</span>
+            </div>
+            <div style={{fontSize:11.5,color:'#b8860b',marginBottom:4}}>
+              <b>Warning:</b> Custom HTML renders in a sandboxed iframe. External scripts and forms may require <span style={{fontFamily:'monospace'}}>allow-forms</span> in the sandbox attribute.
+            </div>
+            <div style={{fontSize:11.5,color:'var(--tx3)',marginBottom:8}}>
+              Great for: Stripe giving forms, Church Center embeds, Google Maps, Mailchimp signups, Planning Center widgets
+            </div>
+            <div style={{marginBottom:8}}>
+              <button onClick={()=>setSnipOpen(o=>!o)} style={{fontSize:12,padding:'4px 10px',borderRadius:6,border:'1px solid var(--b2)',background:'var(--bg3)',color:'var(--tx3)',cursor:'pointer',fontWeight:600}}>
+                {snipOpen ? 'Hide Starter Snippets' : 'Show Starter Snippets'}
+              </button>
+              {snipOpen && (
+                <div style={{marginTop:8,background:'var(--bg4)',border:'1px solid var(--b1)',borderRadius:7,padding:'10px 12px'}}>
+                  {HTML_SNIPPETS.map((snip, i) => (
+                    <div key={i} style={{marginBottom:10}}>
+                      <div style={{fontWeight:600,fontSize:12.5,marginBottom:2}}>{snip.name}</div>
+                      <div style={{fontSize:11.5,color:'var(--tx3)',marginBottom:4}}>{snip.desc}</div>
+                      <button
+                        style={{fontSize:11,padding:'3px 9px',borderRadius:5,border:'1px solid var(--b2)',background:'var(--bg3)',color:'var(--tx3)',cursor:'pointer'}}
+                        onClick={() => {
+                          if (el.code) {
+                            if (!window.confirm('Replace current code with this snippet?')) return;
+                          }
+                          u('code', snip.code);
+                        }}
+                      >Paste this snippet</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </PSec>
+        )}
           <PSec title="Content">
             <label className="lbl">Label</label>
             <input className="inp" value={el.text||''} onChange={e=>u('text',e.target.value)} style={{marginBottom:8}} />
@@ -432,7 +518,6 @@ export default function PropPanel({ el, row, nav, palette, pages, onEl, onRow, o
             <SL label="Radius"    value={el.br||20} min={0}  max={30} unit="px" onChange={v=>u('br',v)} />
           </PSec>
         </>}
-      </>}
 
       {row && !el && <>
         <div style={{padding:'11px 14px',borderBottom:'1px solid var(--b1)',position:'sticky',top:0,background:'var(--bg2)',zIndex:10,display:'flex',alignItems:'center',justifyContent:'space-between'}}>

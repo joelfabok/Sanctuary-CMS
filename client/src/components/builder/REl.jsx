@@ -1,4 +1,50 @@
 export default function REl({ el, onNavigate }) {
+    // Custom HTML block rendering
+    if (el.type === 'html') {
+      const height = el.h || 300;
+      const sandbox = el.sandboxed === false
+        ? 'allow-scripts allow-same-origin allow-forms allow-popups'
+        : 'allow-scripts allow-same-origin';
+      if (!el.code) {
+        return (
+          <div style={{
+            width: '100%',
+            minHeight: height,
+            border: '2px dashed #c8c0b4',
+            borderRadius: 8,
+            background: '#f8f6f2',
+            color: '#b0a898',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 16,
+            fontFamily: 'monospace',
+            padding: 24,
+            textAlign: 'center',
+            opacity: 0.85,
+          }}>
+            <span style={{fontWeight:700,marginRight:8,color:'#b8860b',fontSize:20}}>&lt;/&gt;</span>
+            <span>Custom HTML<br /><span style={{fontSize:12,opacity:0.7}}>Paste HTML, CSS, or JS code</span></span>
+          </div>
+        );
+      }
+      return (
+        <iframe
+          srcDoc={el.code}
+          sandbox={sandbox}
+          style={{
+            width: '100%',
+            height,
+            border: 'none',
+            borderRadius: 8,
+            background: '#fff',
+            display: 'block',
+          }}
+          scrolling="no"
+          title={el.label || 'Custom HTML Block'}
+        />
+      );
+    }
   const al = el.align || 'center'
   const s  = { textAlign:al, width:'100%', paddingTop:el.pt||0, paddingBottom:el.pb||0 }
 

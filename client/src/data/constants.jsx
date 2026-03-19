@@ -33,6 +33,7 @@ export const EL_TYPES = [
   { type:'feature', icon:'⊕',  label:'Feature' },
   { type:'event',   icon:'◷',  label:'Event'   },
   { type:'video',   icon:'▶',  label:'Video'   },
+  { type:'html',    icon:'</>', label:'Custom HTML' },
 ]
 
 // ── Element default factory ────────────────────────────────────────
@@ -51,6 +52,7 @@ export function makeElement(type, extra = {}) {
     quote:   { text:'"Quote here."', attr:'Attribution', bg:'#faf7f2', bc:'#d4a843', fs:19, color:'#1a1715' },
     list:    { style:'bullet', items:['Item one','Item two','Item three'], fs:14, color:'#4a4540', ic:'#d4a843' },
     video:   { src:'', poster:'', autoplay:false, loop:false, muted:true, h:360, br:8 },
+    html:    { code:'', label:'Custom HTML Block', sandboxed:true, h:300 },
   }
   return { id, type, align:'center', pt:8, pb:8, ...(defaults[type] || {}), ...extra }
 }
