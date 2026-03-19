@@ -146,4 +146,69 @@ Log in here: ${loginUrl}
   }
 }
 
-module.exports = { sendInviteEmail };
+/**
+ * Send a password recovery email triggered by org admin.
+ */
+async function sendRecoveryEmail({ to, name, orgName, tempPassword }) {
+  const loginUrl = `${CLIENT_URL}/auth`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0b0b0d;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:40px 24px;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="display:inline-flex;align-items:center;gap:8px;">
+        <div style="width:28px;height:28px;background:linear-gradient(135deg,#d4a843,#b88c2a);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;">✦</div>
+        <span style="font-family:Georgia,'Times New Roman',serif;font-size:21px;font-weight:600;color:#faf8f5;">Sanctuary</span>
+      </div>
+    </div>
+    <div style="background:#16161a;border:1px solid #2a2a2e;border-radius:16px;padding:36px 32px;margin-bottom:24px;">
+      <div style="text-align:center;margin-bottom:28px;">
+        <div style="font-size:40px;margin-bottom:12px;">🔑</div>
+        <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#faf8f5;line-height:1.2;">Password Recovery</h1>
+        <p style="margin:0;font-size:14px;color:#9a9a9e;line-height:1.6;">Hi <strong style="color:#faf8f5;">${name}</strong>, your <strong style="color:#faf8f5;">${orgName}</strong> team admin has reset your password.</p>
+      </div>
+      <div style="background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.18);border-radius:10px;padding:18px 20px;margin-bottom:24px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#d4a843;margin-bottom:10px;">Your temporary login</div>
+        <div style="margin-bottom:6px;">
+          <span style="font-size:12px;color:#6a6a6e;">Email:</span>
+          <span style="font-size:13px;color:#faf8f5;font-family:'Courier New',monospace;margin-left:8px;">${to}</span>
+        </div>
+        <div style="margin-bottom:10px;">
+          <span style="font-size:12px;color:#6a6a6e;">Temporary Password:</span>
+          <span style="font-size:13px;color:#faf8f5;font-family:'Courier New',monospace;margin-left:8px;">${tempPassword}</span>
+        </div>
+        <div style="font-size:11.5px;color:#9a9a9e;line-height:1.5;">⚠️ You'll be asked to set a new password when you log in.</div>
+      </div>
+      <div style="text-align:center;">
+        <a href="${loginUrl}" style="display:inline-block;background:#d4a843;color:#1c0f00;padding:13px 36px;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;letter-spacing:.02em;">Log In Now →</a>
+      </div>
+    </div>
+    <div style="text-align:center;">
+      <p style="font-size:12px;color:#4a4a4e;line-height:1.7;margin:0 0 8px;">This email was sent from Sanctuary Builder on behalf of ${orgName}.<br>If you didn't expect this, contact your team admin.</p>
+      <p style="font-size:11px;color:#3a3a3e;margin:0;">© ${new Date().getFullYear()} Sanctuary Builder · Built for faith communities</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const text = `Password Recovery\n\nHi ${name}, your ${orgName} team admin has reset your password.\n\nEmail: ${to}\nTemporary Password: ${tempPassword}\n\nYou'll be asked to set a new password when you log in.\n\nLog in here: ${loginUrl}\n\n— Sanctuary Builder`;
+
+  try {
+    await transporter.sendMail({
+      from: FROM,
+      to,
+      subject: `Password Recovery — ${orgName} on Sanctuary Builder`,
+      text,
+      html,
+    });
+    return true;
+  } catch (err) {
+    console.error('Failed to send recovery email:', err.message);
+    return false;
+  }
+}
+
+module.exports = { sendInviteEmail, sendRecoveryEmail };

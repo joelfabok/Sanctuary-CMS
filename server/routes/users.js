@@ -2,7 +2,7 @@ const router = require('express').Router();
 const User = require('../models/User');
 const Organization = require('../models/Organization');
 const { protect } = require('../middleware/auth');
-const { sendInviteEmail } = require('../utils/email');
+const { sendInviteEmail, sendRecoveryEmail } = require('../utils/email');
 
 // PUT /api/users/profile
 router.put('/profile', protect, async (req, res) => {
@@ -68,6 +68,64 @@ router.post('/invite', protect, async (req, res) => {
 
     const populated = await Organization.findById(org._id).populate('members', 'name email avatar orgRole');
     res.json({ org: populated });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// PUT /api/users/member/:userId  — owner edits a member's info
+router.put('/member/:userId', protect, async (req, res) => {
+  try {
+    const org = await Organization.findById(req.user.orgId);
+    if (!org) return res.status(404).json({ message: 'Organization not found' });
+    if (org.ownerId.toString() !== req.user._id.toString())
+      return res.status(403).json({ message: 'Only the owner can edit members' });
+    if (!org.members.some(m => m.toString() === req.params.userId))
+      return res.status(404).json({ message: 'Member not in this organization' });
+
+    const member = await User.findById(req.params.userId);
+    if (!member) return res.status(404).json({ message: 'User not found' });
+
+    const { name, email, orgRole } = req.body;
+    if (name) member.name = name;
+    if (email) member.email = email;
+    if (orgRole && member.orgRole !== 'owner') member.orgRole = orgRole;
+    await member.save();
+
+    const populated = await Organization.findById(org._id).populate('members', 'name email avatar orgRole');
+    res.json({ org: populated });
+  } catch (err) {
+    if (err.code === 11000) return res.status(400).json({ message: 'That email is already in use' });
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /api/users/member/:userId/recovery  — owner sends recovery email
+router.post('/member/:userId/recovery', protect, async (req, res) => {
+  try {
+    const org = await Organization.findById(req.user.orgId);
+    if (!org) return res.status(404).json({ message: 'Organization not found' });
+    if (org.ownerId.toString() !== req.user._id.toString())
+      return res.status(403).json({ message: 'Only the owner can send recovery emails' });
+    if (!org.members.some(m => m.toString() === req.params.userId))
+      return res.status(404).json({ message: 'Member not in this organization' });
+
+    const member = await User.findById(req.params.userId);
+    if (!member) return res.status(404).json({ message: 'User not found' });
+
+    const tempPassword = Math.random().toString(36).slice(2) + '!Aa1';
+    member.password = tempPassword;
+    member.forcePasswordReset = true;
+    await member.save();
+
+    sendRecoveryEmail({
+      to: member.email,
+      name: member.name,
+      orgName: org.name,
+      tempPassword,
+    });
+
+    res.json({ message: 'Recovery email sent' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

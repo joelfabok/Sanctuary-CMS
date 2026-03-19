@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { PLANS } from '../data/constants'
-import { Logo } from '../components/shared/UI'
+import { Logo, Modal } from '../components/shared/UI'
 import api from '../utils/api'
 
 export default function Settings() {
@@ -14,6 +14,10 @@ export default function Settings() {
   const [profile, setP]    = useState({ name: user?.name || '', email: user?.email || '' })
   const [pwForm, setPW]    = useState({ current: '', newPw: '' })
   const [newMember, setNM] = useState({ email: '', role: 'editor' })
+  const [editMember, setEM] = useState(null)
+  const [editForm, setEF]   = useState({ name: '', email: '', orgRole: 'editor' })
+  const [editSaving, setES] = useState(false)
+  const [recoverySending, setRS] = useState(false)
   const [orgForm, setOF]   = useState({ name: org?.name || '', type: org?.type || 'Church', domain: org?.domain || '' })
   const [msg, setMsg]      = useState('')
   const plan = PLANS.find(p => p.id === org?.plan) || PLANS[1]
@@ -64,6 +68,31 @@ export default function Settings() {
       const r = await api.delete(`/users/member/${id}`)
       updateOrg(r.data.org)
     } catch (e) { alert(e.response?.data?.message) }
+  }
+
+  const openEditMember = (m) => {
+    setEM(m)
+    setEF({ name: m.name, email: m.email, orgRole: m.orgRole })
+  }
+
+  const saveEditMember = async () => {
+    try {
+      setES(true)
+      const r = await api.put(`/users/member/${editMember._id}`, editForm)
+      updateOrg(r.data.org)
+      setEM(null)
+      flash('Member updated \u2713')
+    } catch (e) { flash(e.response?.data?.message || 'Error') }
+    finally { setES(false) }
+  }
+
+  const sendRecovery = async () => {
+    try {
+      setRS(true)
+      await api.post(`/users/member/${editMember._id}/recovery`)
+      flash('Recovery email sent \u2713')
+    } catch (e) { flash(e.response?.data?.message || 'Error') }
+    finally { setRS(false) }
   }
 
   const saveOrg = async () => {
@@ -234,6 +263,7 @@ export default function Settings() {
                     <div style={{fontSize:11.5,color:'var(--tx4)'}}>{m.email}</div>
                   </div>
                   <span className={m.orgRole==='owner'?'badge badge-gold':'badge badge-dim'} style={{fontSize:10}}>{m.orgRole}</span>
+                  {m.orgRole!=='owner' && <button className="btn btn-dk btn-sm" onClick={() => openEditMember(m)}>Edit</button>}
                   {m.orgRole!=='owner' && <button className="btn btn-dng btn-sm" onClick={() => removeMember(m._id)}>Remove</button>}
                 </div>
               ))}
@@ -250,6 +280,34 @@ export default function Settings() {
               </div>
               {(org?.members?.length||0) >= plan.members && <p style={{color:'var(--red)',fontSize:12,marginTop:8}}>Member limit reached. Upgrade to add more.</p>}
             </div>
+
+            {/* Edit member modal */}
+            {editMember && (
+              <Modal title={`Edit — ${editMember.name}`} onClose={() => setEM(null)} width={440}>
+                <div style={{display:'grid',gap:14,marginBottom:18}}>
+                  <div><label className="lbl">Name</label><input className="inp" value={editForm.name} onChange={e => setEF({...editForm,name:e.target.value})} /></div>
+                  <div><label className="lbl">Email</label><input className="inp" value={editForm.email} onChange={e => setEF({...editForm,email:e.target.value})} /></div>
+                  <div><label className="lbl">Role</label>
+                    <select className="sel-inp" value={editForm.orgRole} onChange={e => setEF({...editForm,orgRole:e.target.value})}>
+                      <option value="editor">Editor</option>
+                      <option value="viewer">Viewer</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={{display:'flex',gap:10,marginBottom:18}}>
+                  <button className="btn btn-gold" style={{flex:1,justifyContent:'center'}} onClick={saveEditMember} disabled={editSaving}>{editSaving ? 'Saving…' : 'Save Changes'}</button>
+                  <button className="btn btn-gh" style={{flex:1,justifyContent:'center'}} onClick={() => setEM(null)}>Cancel</button>
+                </div>
+                <div style={{height:1,background:'var(--b1)',margin:'0 0 18px'}} />
+                <div style={{display:'flex',alignItems:'center',gap:12}}>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight:600,marginBottom:3}}>Password Recovery</div>
+                    <div style={{fontSize:11.5,color:'var(--tx4)',lineHeight:1.5}}>Reset their password and send a recovery email with temporary credentials.</div>
+                  </div>
+                  <button className="btn btn-dk" style={{flexShrink:0}} onClick={sendRecovery} disabled={recoverySending}>{recoverySending ? 'Sending…' : '🔑 Send Recovery Email'}</button>
+                </div>
+              </Modal>
+            )}
           </>}
 
           {tab==='org' && <>
