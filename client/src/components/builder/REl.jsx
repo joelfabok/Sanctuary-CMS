@@ -51,7 +51,13 @@ export default function REl({ el, onNavigate }) {
   const handleLink = (e, href) => {
     if (!href) return
     if (/^(https?:|mailto:|tel:|sms:)/.test(href)) return
-    if (onNavigate) { e.preventDefault(); onNavigate(href) }
+    if (onNavigate) {
+      e.preventDefault();
+      onNavigate(href)
+    } else {
+      // In editor mode, always prevent navigation
+      e.preventDefault();
+    }
   }
 
   if (el.type === 'heading') return (

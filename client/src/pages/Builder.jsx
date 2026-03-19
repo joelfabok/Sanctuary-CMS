@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { PALETTES, NAVBAR_STYLES, EL_TYPES, makeElement, SECTION_BLOCKS } from '../data/constants'
 import REl from '../components/builder/REl'
@@ -10,12 +10,64 @@ import api from '../utils/api'
 
 const uid = () => Math.random().toString(36).slice(2,10)
 
+// ── Parallax background component — TOP LEVEL, outside Builder ────
+function ParallaxBg({ row, canvasRef, rowBgRefs }) {
+  const bgRef = useRef(null)
+
+  useEffect(() => { rowBgRefs.current[row.id] = bgRef }, [row.id])
+
+  useEffect(() => {
+    if (row.bgAttachment !== 'fixed') return
+    const canvasEl = canvasRef.current
+    const bgRef = useRef(null) // Store ref for this row
+    if (!canvasEl || !rowEl) return
+    function updateParallax() {
+      const canvasRect = canvasEl.getBoundingClientRect()
+      const rowRect = rowEl.getBoundingClientRect()
+      const canvasScrollTop = canvasEl.scrollTop
+      const rowTop = rowRect.top + canvasScrollTop - canvasRect.top
+      const speed = 0.4
+      const offset = (canvasScrollTop - rowTop) * speed
+      rowEl.style.backgroundPosition = `${row.bgPosition||'center'} ${offset}px`
+    }
+    updateParallax()
+    canvasEl.addEventListener('scroll', updateParallax)
+    return () => canvasEl.removeEventListener('scroll', updateParallax)
+  }, [row.bgAttachment, row.bgPosition, row.id, canvasRef])
+
+  const style = row.bgAttachment === 'fixed'
+    ? {
+        position: 'absolute',
+        left: 0, right: 0, top: '-10%', height: '120%', zIndex: 0,
+        backgroundImage: `url(${row.bgImage})`,
+        backgroundSize: row.bgSize || 'cover',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: `${row.bgPosition||'center'} 0px`,
+        willChange: 'background-position',
+        pointerEvents: 'none',
+      }
+    : {
+        position: 'absolute',
+        inset: 0,
+        zIndex: 0,
+        backgroundImage: `url(${row.bgImage})`,
+        backgroundSize: row.bgSize || 'cover',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: row.bgPosition || 'center',
+        pointerEvents: 'none',
+      }
+  return <div ref={bgRef} style={style} />
+}
+
 export default function Builder() {
+  // Parallax refs
+  const canvasRef = useRef(null) // Parallax refs
+  const rowBgRefs = useRef({})
   const { siteId } = useParams()
   const nav = useNavigate()
 
   const [site,     setSite]       = useState(null)
-  const [pages,    setPages]      = useState(null)   // [{ id, name, slug, rows }]
+  const [pages,    setPages]      = useState(null)
   const [activePgId, setActivePgId] = useState('')
   const [footerRows, setFooterRows] = useState([])
   const [footerEditing, setFooterEditing] = useState(false)
@@ -24,7 +76,7 @@ export default function Builder() {
   const [palette,  setPalette]  = useState('cornerstone')
   const [customColors, setCC]   = useState({ darkBg:'#0f0e0c', white:'#ffffff', accent:'#d4a843', heading:'#1a1715', lightBg:'#faf8f5', warmBg:'#f0ece4' })
 
-  const [sel,       setSel]     = useState(null)   // { rowId, colIdx, elId }
+  const [sel,       setSel]     = useState(null)
   const [navSel,    setNavSel]  = useState(false)
   const [viewport,  setVP]      = useState('desktop')
   const [leftTab,   setLT]      = useState('blocks')
@@ -32,7 +84,6 @@ export default function Builder() {
   const [saving,    setSaving]  = useState(false)
   const [pub,       setPub]     = useState(false)
 
-  // Drag state
   const [rowDrag,  setRD]  = useState(null)
   const [rowDragOv,setRDO] = useState(null)
   const [elDrag,   setED]  = useState(null)
@@ -40,11 +91,9 @@ export default function Builder() {
   const [palDrag,  setPD]  = useState(null)
   const [secDrag,  setSecDrag] = useState(null)
 
-  // History
   const [hist, setHist] = useState([])
   const [fut,  setFut]  = useState([])
 
-  // Load site
   useEffect(() => {
     api.get(`/sites/${siteId}`).then(r => {
       const s = r.data
@@ -63,14 +112,12 @@ export default function Builder() {
     }).catch(() => nav('/dashboard'))
   }, [siteId])
 
-  // ── Selectors (derived — must be before useEffect that references selEl) ──
-  const activePage = pages?.find(p => p.id === activePgId) || pages?.[0]
+  const activePage  = pages?.find(p => p.id === activePgId) || pages?.[0]
   const activeRows  = activePage?.rows || []
   const ctxRows     = footerEditing ? footerRows : activeRows
   const selRow      = ctxRows?.find(r => r.id === sel?.rowId)
   const selEl       = sel?.elId ? selRow?.cols_data[sel.colIdx]?.find(e => e.id === sel.elId) : null
 
-  // Keyboard shortcuts
   useEffect(() => {
     const h = (e) => {
       if ((e.metaKey||e.ctrlKey) && !e.shiftKey && e.key==='z') { e.preventDefault(); undo() }
@@ -88,7 +135,6 @@ export default function Builder() {
     </div>
   )
 
-  // ── History ────────────────────────────────────────────────────
   const push = (np, nn = null, nfr = null) => {
     setHist(h => [...h.slice(-40), { pages, nav: navCfg, footerRows }])
     setFut([])
@@ -111,7 +157,6 @@ export default function Builder() {
     setFut(f => f.slice(1))
   }
 
-  // ── Save / Publish ──────────────────────────────────────────────
   const save = async (publish = null) => {
     setSaving(true)
     try {
@@ -122,7 +167,6 @@ export default function Builder() {
     } finally { setSaving(false) }
   }
 
-  // ── Selectors ──────────────────────────────────────────────────
   const clearSel  = () => { setSel(null); setNavSel(false) }
   const updateCtxRows = (newRows) => {
     if (footerEditing) {
@@ -132,8 +176,7 @@ export default function Builder() {
     }
   }
 
-  // ── Element operations ─────────────────────────────────────────
-  const updateEl = (nel) => updateCtxRows(ctxRows.map(r => r.id!==sel.rowId ? r : { ...r, cols_data: r.cols_data.map((col,ci) => ci!==sel.colIdx ? col : col.map(e => e.id===nel.id?nel:e)) }))
+  const updateEl  = (nel) => updateCtxRows(ctxRows.map(r => r.id!==sel.rowId ? r : { ...r, cols_data: r.cols_data.map((col,ci) => ci!==sel.colIdx ? col : col.map(e => e.id===nel.id?nel:e)) }))
   const updateRow = (k, v) => {
     if (k==='cols') {
       const r = ctxRows.find(r => r.id===sel.rowId)
@@ -175,12 +218,10 @@ export default function Builder() {
     setCC({ darkBg:pal.colors[0], white:pal.colors[1], accent:pal.colors[2], heading:pal.colors[3], lightBg:pal.colors[4], warmBg:pal.colors[5] })
   }
 
-  // ── Row drag ───────────────────────────────────────────────────
   const onRowDS  = (e,id)  => { setRD(id); e.dataTransfer.effectAllowed='move' }
   const onRowDO  = (e,id)  => { e.preventDefault(); if(id!==rowDrag) setRDO(id) }
   const onRowDrop= (e,tid) => { e.preventDefault(); if(secDrag){dropSecBlock(secDrag,tid);setRDO(null);return}; if(!rowDrag||rowDrag===tid){setRD(null);setRDO(null);return}; const rows=[...ctxRows];const fi=rows.findIndex(r=>r.id===rowDrag),ti=rows.findIndex(r=>r.id===tid);const[it]=rows.splice(fi,1);rows.splice(ti,0,it);updateCtxRows(rows);setRD(null);setRDO(null) }
 
-  // ── Element drag ───────────────────────────────────────────────
   const onElDS  = (e,rId,ci,eId) => { e.stopPropagation(); setED({rowId:rId,colIdx:ci,elId:eId}); e.dataTransfer.effectAllowed='move' }
   const onElDO  = (e,rId,ci,ei) => { e.preventDefault(); e.stopPropagation(); setEDO({rowId:rId,colIdx:ci,elIdx:ei}) }
   const onElDrop= (e,tRId,tCi,tEi) => {
@@ -276,7 +317,7 @@ export default function Builder() {
               border:`1px solid ${footerEditing?'var(--b2)':'transparent'}`,
               fontSize:12,color:footerEditing?'var(--gold)':'var(--tx4)',
               fontWeight:footerEditing?600:400,transition:'all .12s',userSelect:'none'}}>
-            <span style={{fontSize:10}}>▤</span> Footer
+            <span style={{fontSize:10}}>▤</span> Footer
           </div>
         </div>
       )}
@@ -407,8 +448,9 @@ export default function Builder() {
         )}
 
         {/* Canvas */}
-        <div style={{flex:1,overflow:'auto',background:'#1c1c20',display:'flex',justifyContent:'center',alignItems:'flex-start',padding:preview?'0':'18px 16px'}} onClick={e=>{if(e.currentTarget===e.target)clearSel()}} onDragOver={e=>{if(secDrag){e.preventDefault();e.dataTransfer.dropEffect='copy'}}} onDrop={e=>{if(secDrag){e.preventDefault();dropSecBlock(secDrag)}}}>
+        <div ref={canvasRef} style={{flex:1,overflow:'auto',background:'#1c1c20',display:'flex',justifyContent:'center',alignItems:'flex-start',padding:preview?'0':'18px 16px'}} onClick={e=>{if(e.currentTarget===e.target)clearSel()}} onDragOver={e=>{if(secDrag){e.preventDefault();e.dataTransfer.dropEffect='copy'}}} onDrop={e=>{if(secDrag){e.preventDefault();dropSecBlock(secDrag)}}}>
           <div style={{width:cvW,background:'white',boxShadow:preview?'none':'0 2px 4px rgba(0,0,0,.3),0 20px 60px rgba(0,0,0,.55)',borderRadius:preview?0:8,overflow:'clip',minHeight:'100%',transition:'width .3s ease'}}>
+
             {/* Navbar */}
             {(()=>{
               const c = {dark:customColors.darkBg,accent:customColors.accent,heading:customColors.heading,light:customColors.lightBg}
@@ -420,7 +462,6 @@ export default function Builder() {
                       const pg = pages.find(p => p.slug === slug)
                       if (pg) setActivePgId(pg.id)
                     } : undefined} />
-                  {/* Intercept all clicks in edit mode so anchor tags can't navigate */}
                   {!preview && <div style={{position:'absolute',inset:0,zIndex:1000,cursor:'pointer'}} onClick={e=>{e.stopPropagation();setNavSel(true);setSel(null)}} />}
                   {navSel&&!preview&&<div style={{position:'absolute',top:6,right:8,background:'var(--bg)',border:'1px solid var(--b2)',borderRadius:6,padding:'3px 8px',fontSize:11,color:'var(--gold)',fontWeight:600,zIndex:50,animation:'popIn .15s ease'}}>Navbar selected · edit in panel →</div>}
                 </div>
@@ -447,9 +488,9 @@ export default function Builder() {
                   draggable={!preview} onDragStart={e=>onRowDS(e,row.id)} onDragOver={e=>onRowDO(e,row.id)} onDrop={e=>onRowDrop(e,row.id)} onDragEnd={()=>{setRD(null);setRDO(null)}}
                   style={{position:'relative',background:(row.bgImage||row.bgVideo)?'transparent':(row.bg||'#fff'),paddingTop:row.pt??40,paddingBottom:row.pb??40,outline:isRS&&!preview?'2px solid rgba(212,168,67,.5)':'2px solid transparent',outlineOffset:'-2px',transition:'outline .1s,opacity .15s',opacity:rowDrag===row.id?.4:1,borderBottom:isDRO?'3px solid var(--gold)':'3px solid transparent'}}>
 
-                  {/* Background image */}
+                  {/* Background image with parallax support */}
                   {row.bgImage && !row.bgVideo && (
-                    <div style={{position:'absolute',inset:0,zIndex:0,backgroundImage:`url(${row.bgImage})`,backgroundSize:row.bgSize||'cover',backgroundPosition:row.bgPos||'center'}} />
+                    <ParallaxBg row={row} canvasRef={canvasRef} rowBgRefs={rowBgRefs} />
                   )}
 
                   {/* Background video */}

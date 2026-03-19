@@ -32,26 +32,13 @@ export default function NavRenderer({ navCfg, colors, isMobile, onNavigate }) {
   const c           = colors
   const showMobile  = isMobile || screenMobile
   const sticky      = navCfg.sticky === true
+  const floating    = navCfg.floating === true
 
-  const stickyWrapper = (children) => (
-    <div style={sticky ? { position: 'sticky', top: 0, zIndex: 100 } : {}}>
-      {children}
-    </div>
-  )
-
-  // ── Desktop ────────────────────────────────────────────
-  if (!showMobile) return stickyWrapper(<>{ns.render(navCfg, c, {
-    onLogo: onNavigate ? () => onNavigate('/') : null,
-    onLink: onNavigate ? (href) => onNavigate(href) : null,
-  })}</>)
-
-  // ── Shared mobile values ──────────────────────────────────────
+  // Always compute background with opacity for all modes
   const style       = navCfg.style || 'classic'
   const isLight     = style === 'minimal' || style === 'bold'
-  // Compose background with opacity if set
   let bg = navCfg.bg || (isLight ? '#ffffff' : c.dark)
   if (typeof navCfg.bgOpacity === 'number' && navCfg.bgOpacity < 1) {
-    // Convert hex or rgb(a) to rgba with opacity
     const hexToRgba = (hex, alpha) => {
       let c = hex.replace('#', '')
       if (c.length === 3) c = c.split('').map(x => x + x).join('')
@@ -63,8 +50,26 @@ export default function NavRenderer({ navCfg, colors, isMobile, onNavigate }) {
     else if (bg.startsWith('rgba(')) {
       bg = bg.replace(/rgba\(([^)]+),[^)]+\)/, `rgba($1,${navCfg.bgOpacity})`)
     }
-    // else leave as is
   }
+
+  // Desktop: floating/overlay or sticky/normal
+  if (!showMobile) {
+    const navBar = ns.render({ ...navCfg, bg }, c, {
+      onLogo: onNavigate ? () => onNavigate('/') : null,
+      onLink: onNavigate ? (href) => onNavigate(href) : null,
+    })
+    if (floating) {
+      return (
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 300, pointerEvents: 'auto' }}>{navBar}</div>
+      )
+    } else {
+      return (
+        <div style={sticky ? { position: 'sticky', top: 0, zIndex: 100 } : {}}>{navBar}</div>
+      )
+    }
+  }
+
+  // ── Shared mobile values ──────────────────────────────────────
   const logoColor   = navCfg.logoColor|| (isLight ? (c.heading || '#1a1715')     : c.accent)
   const linkColor   = navCfg.linkColor|| (isLight ? (c.heading || '#1a1715')     : 'rgba(240,236,230,.8)')
   const burgerColor = isLight ? (c.heading || '#1a1715') : 'rgba(240,236,230,.85)'
