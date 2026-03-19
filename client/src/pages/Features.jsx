@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Logo } from '../components/shared/UI'
 
@@ -29,17 +30,49 @@ const HIGHLIGHTS = [
 export default function Features() {
   const nav = useNavigate()
 
+
+  // Mobile nav state
+  const [navOpen, setNavOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 900)
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 900)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+
   return (
-    <div style={{height:'100vh',overflow:'auto',background:'var(--bg)'}}>
-      {/* Nav */}
-      <nav style={{position:'sticky',top:0,zIndex:100,height:58,background:'rgba(11,11,13,.92)',backdropFilter:'blur(16px)',borderBottom:'1px solid var(--b1)',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 36px'}}>
-        <Logo size={28} style={{cursor:'pointer'}} onClick={()=>nav('/')} />
-        <div style={{display:'flex',gap:5,alignItems:'center'}}>
-          {['Templates','Features','Pricing'].map(l=><span key={l} style={{padding:'5px 10px',fontSize:13,color:l==='Features'?'var(--gold)':'var(--tx3)',cursor:'pointer'}} onClick={()=>{if(l==='Pricing')nav('/pricing');if(l==='Templates')nav('/templates');if(l==='Features')nav('/features')}}>{l}</span>)}
-          <div style={{width:1,height:18,background:'var(--b1)',margin:'0 5px'}} />
-          <button className="btn btn-gh btn-sm" onClick={()=>nav('/auth')}>Sign In</button>
-          <button className="btn btn-gold btn-sm" onClick={()=>nav('/pricing')}>Get Started</button>
+    <div style={{minHeight:'100vh',overflow:'auto',background:'var(--bg)'}}>
+      {/* Responsive Nav */}
+      <nav style={{position:'sticky',top:0,zIndex:100,background:'rgba(11,11,13,.92)',backdropFilter:'blur(16px)',borderBottom:'1px solid var(--b1)'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',height:58,padding:'0 20px'}}>
+          <Logo size={28} style={{cursor:'pointer'}} onClick={()=>{setNavOpen(false);nav('/')}} />
+          {isMobile ? (
+            <button
+              aria-label={navOpen ? 'Close menu' : 'Open menu'}
+              onClick={()=>setNavOpen(o=>!o)}
+              style={{background:'none',border:'none',color:'var(--tx3)',fontSize:28,cursor:'pointer',padding:6,display:'flex',alignItems:'center'}}>
+              {navOpen ? '✕' : '☰'}
+            </button>
+          ) : (
+            <div style={{display:'flex',gap:5,alignItems:'center'}}>
+              {['Templates','Features','Pricing'].map(l=><span key={l} style={{padding:'5px 10px',fontSize:13,color:l==='Features'?'var(--gold)':'var(--tx3)',cursor:'pointer'}} onClick={()=>{if(l==='Pricing')nav('/pricing');if(l==='Templates')nav('/templates');if(l==='Features')nav('/features')}}>{l}</span>)}
+              <div style={{width:1,height:18,background:'var(--b1)',margin:'0 5px'}} />
+              <button className="btn btn-gh btn-sm" onClick={()=>nav('/auth')}>Sign In</button>
+              <button className="btn btn-gold btn-sm" onClick={()=>nav('/pricing')}>Get Started</button>
+            </div>
+          )}
         </div>
+        {/* Mobile dropdown */}
+        {isMobile && navOpen && (
+          <div style={{background:'rgba(11,11,13,.98)',borderBottom:'1px solid var(--b1)',boxShadow:'0 8px 32px rgba(0,0,0,.22)',position:'absolute',top:58,left:0,right:0,zIndex:101,animation:'popIn .13s',display:'flex',flexDirection:'column'}}>
+            {['Templates','Features','Pricing'].map(l=>(
+              <span key={l} style={{padding:'16px 24px',fontSize:16,color:l==='Features'?'var(--gold)':'var(--tx2)',borderBottom:'1px solid var(--b1)',cursor:'pointer'}} onClick={()=>{setNavOpen(false);if(l==='Pricing')nav('/pricing');if(l==='Templates')nav('/templates');if(l==='Features')nav('/features')}}>{l}</span>
+            ))}
+            <div style={{height:1,background:'var(--b1)',margin:'0 0 0 0'}} />
+            <button className="btn btn-gh btn-sm" style={{margin:'16px 24px 8px'}} onClick={()=>{setNavOpen(false);nav('/auth')}}>Sign In</button>
+            <button className="btn btn-gold btn-sm" style={{margin:'0 24px 16px'}} onClick={()=>{setNavOpen(false);nav('/pricing')}}>Get Started</button>
+          </div>
+        )}
       </nav>
 
       {/* Hero */}

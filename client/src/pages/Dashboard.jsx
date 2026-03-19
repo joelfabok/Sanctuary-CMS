@@ -58,21 +58,58 @@ export default function Dashboard() {
 
   const greet = () => { const h = new Date().getHours(); return h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening' }
 
+
+  // Mobile nav state
+  const [navOpen, setNavOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 900)
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 900)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+
   return (
     <div style={{height:'100vh',display:'flex',flexDirection:'column',background:'var(--bg)'}}>
-      {/* Topnav */}
-      <nav style={{height:54,background:'var(--bg2)',borderBottom:'1px solid var(--b1)',display:'flex',alignItems:'center',padding:'0 24px',gap:10,flexShrink:0}}>
-        <Logo size={24} />
-        <div style={{width:1,height:18,background:'var(--b1)',margin:'0 6px'}} />
-        <span style={{fontSize:13,color:'var(--tx3)',fontWeight:500}}>{org?.name}</span>
-        <span className="badge badge-gold" style={{fontSize:9}}>{plan.name} Plan</span>
-        <div style={{flex:1}} />
-        <button className="btn btn-gh btn-sm" onClick={() => nav('/settings')}>⚙ Settings</button>
-        <div style={{display:'flex',alignItems:'center',gap:8,padding:'4px 10px',background:'var(--bg4)',border:'1px solid var(--b1)',borderRadius:7,cursor:'pointer'}} onClick={() => nav('/settings')}>
-          <div style={{width:24,height:24,borderRadius:'50%',background:'var(--g3)',border:'1px solid rgba(212,168,67,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:'var(--gold2)'}}>{user?.avatar}</div>
-          <span style={{fontSize:12.5,color:'var(--tx2)'}}>{user?.name?.split(' ')[0]}</span>
+      {/* Topnav - Responsive */}
+      <nav style={{background:'var(--bg2)',borderBottom:'1px solid var(--b1)',position:'sticky',top:0,zIndex:100}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',height:54,padding:'0 16px',gap:8}}>
+          <div style={{display:'flex',alignItems:'center',gap:8}}>
+            <Logo size={24} />
+            <div style={{width:1,height:18,background:'var(--b1)',margin:'0 6px'}} />
+            {!isMobile && <span style={{fontSize:13,color:'var(--tx3)',fontWeight:500}}>{org?.name}</span>}
+            {!isMobile && <span className="badge badge-gold" style={{fontSize:9}}>{plan.name} Plan</span>}
+          </div>
+          {isMobile ? (
+            <button
+              aria-label={navOpen ? 'Close menu' : 'Open menu'}
+              onClick={()=>setNavOpen(o=>!o)}
+              style={{background:'none',border:'none',color:'var(--tx3)',fontSize:28,cursor:'pointer',padding:6,display:'flex',alignItems:'center'}}>
+              {navOpen ? '✕' : '☰'}
+            </button>
+          ) : (
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <button className="btn btn-gh btn-sm" onClick={() => nav('/settings')}>⚙ Settings</button>
+              <div style={{display:'flex',alignItems:'center',gap:8,padding:'4px 10px',background:'var(--bg4)',border:'1px solid var(--b1)',borderRadius:7,cursor:'pointer'}} onClick={() => nav('/settings')}>
+                <div style={{width:24,height:24,borderRadius:'50%',background:'var(--g3)',border:'1px solid rgba(212,168,67,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:'var(--gold2)'}}>{user?.avatar}</div>
+                <span style={{fontSize:12.5,color:'var(--tx2)'}}>{user?.name?.split(' ')[0]}</span>
+              </div>
+              <button className="btn btn-gh btn-sm" onClick={() => { logout(); nav('/') }}>Sign Out</button>
+            </div>
+          )}
         </div>
-        <button className="btn btn-gh btn-sm" onClick={() => { logout(); nav('/') }}>Sign Out</button>
+        {/* Mobile dropdown */}
+        {isMobile && navOpen && (
+          <div style={{background:'rgba(11,11,13,.98)',borderBottom:'1px solid var(--b1)',boxShadow:'0 8px 32px rgba(0,0,0,.22)',position:'absolute',top:54,left:0,right:0,zIndex:101,animation:'popIn .13s',display:'flex',flexDirection:'column'}}>
+            <span style={{padding:'16px 24px',fontSize:15,color:'var(--tx2)',borderBottom:'1px solid var(--b1)'}}>{org?.name}</span>
+            <span style={{padding:'12px 24px',fontSize:12,color:'var(--gold)',borderBottom:'1px solid var(--b1)'}}>{plan.name} Plan</span>
+            <button className="btn btn-gh btn-sm" style={{margin:'16px 24px 8px'}} onClick={()=>{setNavOpen(false);nav('/settings')}}>⚙ Settings</button>
+            <div style={{display:'flex',alignItems:'center',gap:8,padding:'4px 24px',background:'var(--bg4)',border:'1px solid var(--b1)',borderRadius:7,margin:'0 24px 12px',cursor:'pointer'}} onClick={()=>{setNavOpen(false);nav('/settings')}}>
+              <div style={{width:24,height:24,borderRadius:'50%',background:'var(--g3)',border:'1px solid rgba(212,168,67,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:'var(--gold2)'}}>{user?.avatar}</div>
+              <span style={{fontSize:12.5,color:'var(--tx2)'}}>{user?.name?.split(' ')[0]}</span>
+            </div>
+            <button className="btn btn-gh btn-sm" style={{margin:'0 24px 16px'}} onClick={()=>{setNavOpen(false);logout();nav('/')}}>Sign Out</button>
+          </div>
+        )}
       </nav>
 
       <div style={{flex:1,overflow:'auto',padding:'34px 28px',maxWidth:1160,width:'100%',margin:'0 auto',boxSizing:'border-box'}}>
@@ -162,17 +199,17 @@ export default function Dashboard() {
 
       {/* Site info / custom domain modal */}
       {siteInfo && (
-        <Modal title="Site Info" onClose={() => setSiteInfo(null)} width={520}>
+        <Modal title="Site Info" onClose={() => setSiteInfo(null)} width={window.innerWidth < 600 ? '98vw' : 520}>
           <div style={{marginBottom:18}}>
-            <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>{siteInfo.name}</div>
+            <div style={{fontSize:15,fontWeight:600,marginBottom:4,wordBreak:'break-word'}}>{siteInfo.name}</div>
             <span className="badge" style={{background:siteInfo.published?'rgba(74,222,128,.12)':'rgba(255,255,255,.08)',color:siteInfo.published?'var(--green)':'var(--tx3)',border:`1px solid ${siteInfo.published?'rgba(74,222,128,.2)':'var(--b1)'}`,fontSize:10}}>{siteInfo.published ? '● Live' : '○ Draft'}</span>
           </div>
 
           {/* Default URL */}
           <div style={{marginBottom:18}}>
             <div style={{fontSize:10.5,fontWeight:700,letterSpacing:'.07em',textTransform:'uppercase',color:'var(--tx4)',marginBottom:6}}>Default URL</div>
-            <div style={{padding:'10px 13px',background:'var(--bg4)',border:'1px solid var(--b1)',borderRadius:8,fontFamily:"'JetBrains Mono',monospace",fontSize:12.5,color:'var(--tx2)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-              <span>{window.location.origin}/site/{siteInfo._id}</span>
+            <div style={{padding:'10px 6px',background:'var(--bg4)',border:'1px solid var(--b1)',borderRadius:8,fontFamily:"'JetBrains Mono',monospace",fontSize:12.5,color:'var(--tx2)',display:'flex',flexDirection:window.innerWidth<500?'column':'row',alignItems:window.innerWidth<500?'stretch':'center',justifyContent:'space-between',gap:window.innerWidth<500?8:0}}>
+              <span style={{wordBreak:'break-all'}}>{window.location.origin}/site/{siteInfo._id}</span>
               <button className="btn btn-dk btn-sm" style={{fontSize:10,padding:'3px 8px',flexShrink:0}} onClick={() => {navigator.clipboard.writeText(`${window.location.origin}/site/${siteInfo._id}`)}}>Copy</button>
             </div>
           </div>
@@ -180,28 +217,28 @@ export default function Dashboard() {
           {/* Custom Domain */}
           <div style={{marginBottom:18}}>
             <div style={{fontSize:10.5,fontWeight:700,letterSpacing:'.07em',textTransform:'uppercase',color:'var(--tx4)',marginBottom:6}}>Custom Domain</div>
-            <div style={{display:'flex',gap:8}}>
+            <div style={{display:'flex',flexDirection:window.innerWidth<500?'column':'row',gap:8}}>
               <input
                 value={infoDomain} onChange={e => setInfoDomain(e.target.value)}
                 placeholder="www.yourchurch.com"
-                style={{flex:1,padding:'9px 12px',borderRadius:8,border:'1px solid var(--b2)',background:'var(--bg4)',color:'var(--tx)',fontSize:13,fontFamily:"'JetBrains Mono',monospace",outline:'none'}}
+                style={{flex:1,padding:'9px 12px',borderRadius:8,border:'1px solid var(--b2)',background:'var(--bg4)',color:'var(--tx)',fontSize:13,fontFamily:"'JetBrains Mono',monospace",outline:'none',marginBottom:window.innerWidth<500?8:0}}
               />
               <button className="btn btn-gold btn-sm" onClick={saveDomain} disabled={infoSaving}>{infoSaving ? 'Saving…' : 'Save'}</button>
             </div>
             {siteInfo.customDomain && (
-              <div style={{marginTop:8,padding:'7px 12px',background:'rgba(74,222,128,.06)',border:'1px solid rgba(74,222,128,.15)',borderRadius:7,fontSize:12,color:'var(--green)',display:'flex',alignItems:'center',gap:6}}>
+              <div style={{marginTop:8,padding:'7px 12px',background:'rgba(74,222,128,.06)',border:'1px solid rgba(74,222,128,.15)',borderRadius:7,fontSize:12,color:'var(--green)',display:'flex',alignItems:'center',gap:6,wordBreak:'break-all'}}>
                 <span>✓</span> Custom domain set: <strong style={{fontFamily:"'JetBrains Mono',monospace"}}>{siteInfo.customDomain}</strong>
               </div>
             )}
           </div>
 
           {/* DNS Instructions */}
-          <div style={{background:'var(--bg3)',border:'1px solid var(--b1)',borderRadius:12,padding:'18px 20px'}}>
+          <div style={{background:'var(--bg3)',border:'1px solid var(--b1)',borderRadius:12,padding:'14px 4px',overflowX:'auto'}}>
             <div style={{fontSize:13,fontWeight:700,color:'var(--tx)',marginBottom:12}}>📋 DNS Setup Instructions</div>
             <p style={{fontSize:12.5,color:'var(--tx3)',lineHeight:1.7,marginBottom:14}}>To connect your custom domain, add these records at your domain registrar (GoDaddy, Namecheap, Cloudflare, etc.):</p>
 
             {/* DNS records table */}
-            <div style={{background:'var(--bg4)',border:'1px solid var(--b1)',borderRadius:8,overflow:'hidden',marginBottom:14}}>
+            <div style={{background:'var(--bg4)',border:'1px solid var(--b1)',borderRadius:8,overflow:'auto',marginBottom:14,minWidth:window.innerWidth<500?340:0}}>
               <div style={{display:'grid',gridTemplateColumns:'70px 1fr 1fr',padding:'8px 14px',background:'var(--bg5)',borderBottom:'1px solid var(--b1)'}}>
                 {['Type','Name','Value'].map(h => <span key={h} style={{fontSize:10,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:'var(--tx4)'}}>{h}</span>)}
               </div>

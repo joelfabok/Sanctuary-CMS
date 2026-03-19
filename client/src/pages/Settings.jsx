@@ -127,29 +127,49 @@ export default function Settings() {
 
   const TABS = [['profile','Profile'],['billing','Billing & Plan'],['team','Team Members'],['org','Organization']]
 
+  // Mobile nav state
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 900)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 900)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+
   return (
     <div style={{height:'100vh',display:'flex',flexDirection:'column',background:'var(--bg)'}}>
-      <nav style={{height:52,background:'var(--bg2)',borderBottom:'1px solid var(--b1)',display:'flex',alignItems:'center',padding:'0 22px',gap:10,flexShrink:0}}>
+      {/* Responsive Nav */}
+      <nav style={{height:52,background:'var(--bg2)',borderBottom:'1px solid var(--b1)',display:'flex',alignItems:'center',padding:'0 12px',gap:10,flexShrink:0,position:'sticky',top:0,zIndex:100}}>
+        {isMobile && (
+          <button
+            aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
+            onClick={()=>setSidebarOpen(o=>!o)}
+            style={{background:'none',border:'none',color:'var(--tx3)',fontSize:26,cursor:'pointer',padding:6,display:'flex',alignItems:'center',marginRight:8}}>
+            {sidebarOpen ? '✕' : '☰'}
+          </button>
+        )}
         <button className="btn btn-gh btn-sm" onClick={() => nav('/dashboard')}>← Dashboard</button>
         <div style={{flex:1}} />
         <Logo size={22} />
-        <span style={{fontSize:13,color:'var(--tx3)',marginLeft:8}}>Settings — {org?.name}</span>
+        {!isMobile && <span style={{fontSize:13,color:'var(--tx3)',marginLeft:8}}>Settings — {org?.name}</span>}
         <div style={{flex:1}} />
       </nav>
 
-      <div style={{flex:1,overflow:'auto',display:'flex'}}>
+      <div style={{flex:1,overflow:'auto',display:'flex',position:'relative'}}>
         {/* Sidebar */}
-        <div style={{width:220,background:'var(--bg2)',borderRight:'1px solid var(--b1)',padding:'18px 10px',flexShrink:0}}>
-          {TABS.map(([t,l]) => (
-            <button key={t} onClick={() => setTab(t)}
-              style={{display:'flex',alignItems:'center',gap:9,padding:'8px 12px',width:'100%',border:'none',borderRadius:7,background:tab===t?'var(--g4)':'transparent',color:tab===t?'var(--gold)':'var(--tx3)',fontSize:13,fontWeight:tab===t?600:400,cursor:'pointer',textAlign:'left',fontFamily:"'Instrument Sans',sans-serif",borderLeft:tab===t?'2px solid var(--gold)':'2px solid transparent',paddingLeft:tab===t?10:12,transition:'all .12s',marginBottom:2}}>
-              {l}
-            </button>
-          ))}
-        </div>
+        {(isMobile ? sidebarOpen : true) && (
+          <div style={{width:isMobile?'70vw':220,background:'var(--bg2)',borderRight:'1px solid var(--b1)',padding:'18px 10px',flexShrink:0,position:isMobile?'absolute':'static',zIndex:101,top:0,left:0,height:'100%',boxShadow:isMobile?'0 8px 32px rgba(0,0,0,.22)':'none',animation:isMobile?'popIn .13s':'none'}}>
+            {TABS.map(([t,l]) => (
+              <button key={t} onClick={() => {setTab(t); setSidebarOpen(false)}}
+                style={{display:'flex',alignItems:'center',gap:9,padding:'8px 12px',width:'100%',border:'none',borderRadius:7,background:tab===t?'var(--g4)':'transparent',color:tab===t?'var(--gold)':'var(--tx3)',fontSize:13,fontWeight:tab===t?600:400,cursor:'pointer',textAlign:'left',fontFamily:"'Instrument Sans',sans-serif",borderLeft:tab===t?'2px solid var(--gold)':'2px solid transparent',paddingLeft:tab===t?10:12,transition:'all .12s',marginBottom:2}}>
+                {l}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Content */}
-        <div style={{flex:1,padding:'30px 34px',overflow:'auto',maxWidth:680}}>
+        <div style={{flex:1,padding:isMobile?'18px 8vw':'30px 34px',overflow:'auto',maxWidth:680,marginLeft:isMobile&&sidebarOpen?'70vw':0,transition:'margin .2s'}}>
           {msg && <div style={{padding:'9px 14px',background:'rgba(74,222,128,.08)',border:'1px solid rgba(74,222,128,.18)',borderRadius:'var(--r)',color:'var(--green)',fontSize:13,marginBottom:18,cursor:'pointer'}} onClick={() => setMsg('')}>{msg}</div>}
 
           {tab==='profile' && <>
